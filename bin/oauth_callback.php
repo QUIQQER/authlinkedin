@@ -1,5 +1,38 @@
-<?php
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>LinkedIn OAuth Callback</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<script>
+    (function () {
+        function getParam(name) {
+            try {
+                return new URLSearchParams(window.location.search).get(name);
+            } catch (e) {
+                return null;
+            }
+        }
 
-// This file is required as OAuth redirect_uri for Apple authentication.
-// It can remain empty unless you need to handle server-side logic after redirect.
-// All authentication and token handling is done client-side in JavaScript.
+        const code = getParam('code');
+        const state = getParam('state');
+        const error = getParam('error') || getParam('error_description');
+
+        const payload = {
+            provider: 'linkedin',
+            code: code,
+            state: state,
+            error: error || null
+        };
+
+        if (window.opener && window.opener !== window) {
+            window.opener.postMessage(payload, window.location.origin);
+        }
+
+        window.close();
+    })();
+</script>
+</body>
+</html>

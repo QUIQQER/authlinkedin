@@ -24,6 +24,7 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
             this.$token = null;
             this.$code = null;
             this.$clientId = null;
+            this.$accessToken = null;
         },
 
         getButton: function () {
@@ -31,63 +32,111 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
         },
 
         authenticate: function () {
-            return this.loadLinkedInScript().then(() => {
-                return this.getClientId();
-            }).then(() => {
-                if (typeof window.AppleID === 'undefined') {
-                    return Promise.reject('LinkedIn is not defined');
+            return this.getClientId().then(() => {
+                if (this.$token) {
+                    return this.$token;
                 }
 
-                const redirectURI = window.location.origin + URL_OPT_DIR + 'quiqqer/authlinkedin/bin/oauth_callback.php';
+                return new Promise((resolve, reject) => {
+                    const redirectUri = window.location.origin + URL_OPT_DIR + 'quiqqer/authlinkedin/bin/oauth_callback.php';
+                    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+                    const authUrl = 'https://www.linkedin.com/oauth/v2/authorization'
+                        + '?response_type=code'
+                        + '&client_id=' + encodeURIComponent(this.$clientId)
+                        + '&redirect_uri=' + encodeURIComponent(redirectUri)
+                        + '&scope=' + encodeURIComponent('openid profile email')
+                        + '&state=' + encodeURIComponent(state);
 
-                AppleID.auth.init({
-                    clientId: this.$clientId,
-                    scope: 'name email',
-                    redirectURI: redirectURI,
-                    usePopup: true
-                });
+                    const popup = window.open(
+                        authUrl,
+                        'linkedin_auth',
+                        'width=520,height=640,noopener,noreferrer'
+                    );
 
-                return AppleID.auth.signIn().then((response) => {
-                    // response.authorization.code (für Backend)
-                    // response.authorization.id_token (optional, für JWT-Daten)
+                    if (!popup) {
+                        reject('LinkedIn popup blocked');
+                        return;
+                    }
 
-                    this.$token = response.authorization.id_token;
-                    this.$code = response.authorization.code;
+                    let timer = null;
+
+                    const cleanup = () => {
+                        window.removeEventListener('message', onMessage);
+                        if (timer) {
+                            window.clearInterval(timer);
+                        }
+                    };
+
+                    const onMessage = (event) => {
+                        if (event.origin !== window.location.origin) {
+                            return;
+                        }
+
+                        const data = event.data || {};
+
+                        if (data.provider !== 'linkedin') {
+                            return;
+                        }
+
+                        cleanup();
+
+                        if (data.state !== state) {
+                            reject('LinkedIn state mismatch');
+                            return;
+                        }
+
+                        if (data.error) {
+                            reject(data.error);
+                            return;
+                        }
+
+                        this.$code = data.code || null;
+
+                        if (!this.$code) {
+                            reject('LinkedIn code missing');
+                            return;
+                        }
+
+                        this.exchangeCode(this.$code, redirectUri).then((tokens) => {
+                            this.$token = tokens.id_token || null;
+                            this.$accessToken = tokens.access_token || null;
+
+                            if (!this.$token) {
+                                reject('LinkedIn id_token missing');
+                                return;
+                            }
+
+                            resolve(this.$token);
+                        }).catch(reject);
+                    };
+
+                    window.addEventListener('message', onMessage, false);
+
+                    timer = window.setInterval(() => {
+                        if (popup.closed) {
+                            cleanup();
+                            reject('LinkedIn popup closed');
+                        }
+                    }, 300);
                 });
             });
         },
 
-        loadLinkedInScript: function () {
+        /**
+         * Exchange authorization code for LinkedIn tokens
+         *
+         * @param {string} code
+         * @param {string} redirectUri
+         * @return {Promise}
+         */
+        exchangeCode: function (code, redirectUri) {
             return new Promise((resolve, reject) => {
-                const existing = document.querySelector(
-                    'script[src*="appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"]'
-                );
-
-                if (existing) {
-                    resolve();
-                    return;
-                }
-
-
-                // Workaround für AMD/RequireJS-Konflikt
-                let oldDefine = window.define;
-                window.define = undefined;
-
-                const script = document.createElement('script');
-                script.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
-                script.async = true;
-                script.defer = true;
-                script.onload = function () {
-                    window.define = oldDefine; // restore define
-                    resolve();
-                };
-                script.onerror = function () {
-                    window.define = oldDefine;
-                    reject();
-                };
-                document.head.appendChild(script);
-            }).then(() => {
-                this.$loaded = true;
+                QUIAjax.post('package_quiqqer_authlinkedin_ajax_exchangeCode', resolve, {
+                    'package': 'quiqqer/authlinkedin',
+                    code: code,
+                    redirectUri: redirectUri,
+                    onError: reject
+                });
             });
         },
 
