@@ -1,4 +1,4 @@
-![QUIQQER Auth LinkedIn](bin/images/Readme.jpg)
+![QUIQQER Auth LinkedIn](bin/images/Readme.png)
 
 QUIQQER LinkedIn authentication and registration
 ========
