@@ -1,0 +1,22 @@
+{
+    "name": "quiqqer/authlinkedin",
+    "type": "quiqqer-module",
+    "description": "QUIQQER registration and authentication with LinkedIn account",
+    "license": "GPL-3.0+",
+    "homepage": "https://www.quiqqer.com",
+    "authors": [],
+    "support": {
+        "email": "support@pcsg.de",
+        "url": "https://www.pcsg.de"
+    },
+    "require": {
+        "quiqqer\/core": "^2.1",
+        "quiqqer\/frontend-users": "^2.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "QUI\\Auth\\LinkedIn\\": "src\/QUI\/Auth\/LinkedIn",
+            "QUI\\Registration\\LinkedIn\\": "src\/QUI\/Registration\/LinkedIn"
+        }
+    }
+}

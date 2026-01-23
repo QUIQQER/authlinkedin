@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<locales>
+    <groups name="quiqqer/authlinkedin" datatype="js,php">
+        <locale name="authlinkedin.title">
+            <de><![CDATA[LinkedIn Login]]></de>
+            <en><![CDATA[LinkedIn Login]]></en>
+        </locale>
+        <locale name="authlinkedin.description">
+            <de><![CDATA[QUIQQER Authentifikation mittels LinkedIn-Konto]]></de>
+            <en><![CDATA[QUIQQER authentication via LinkedIn Account]]></en>
+        </locale>
+
+        <!-- Package -->
+        <locale name="package.title">
+            <de><![CDATA[LinkedIn Registrierung und Login für QUIQQER]]></de>
+            <en><![CDATA[LinkedIn registration and login for QUIQQER]]></en>
+        </locale>
+        <locale name="package.description">
+            <de><![CDATA[QUIQQER Registrierung und Authentifikation mittels LinkedIn-Konto]]></de>
+            <en><![CDATA[QUIQQER registration and authentication via LinkedIn Account]]></en>
+        </locale>
+
+        <!-- Settings -->
+        <locale name="settings.title">
+            <de><![CDATA[LinkedIn Registrierung / Login]]></de>
+            <en><![CDATA[LinkedIn Registration / Login]]></en>
+        </locale>
+        <locale name="settings.category.settings.title">
+            <de><![CDATA[Einstellungen]]></de>
+            <en><![CDATA[Settings]]></en>
+        </locale>
+        <locale name="settings.apiSettings.title">
+            <de><![CDATA[LinkedIn API]]></de>
+            <en><![CDATA[LinkedIn API]]></en>
+        </locale>
+        <locale name="settings.authSettings.title">
+            <de><![CDATA[Authentifizierung]]></de>
+            <en><![CDATA[Authentication]]></en>
+        </locale>
+        <locale name="settings.apiSettings.clientId.title">
+            <de><![CDATA[Client-ID]]></de>
+            <en><![CDATA[Client-ID]]></en>
+        </locale>
+    </groups>
+</locales>
