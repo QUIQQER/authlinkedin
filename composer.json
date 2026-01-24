@@ -15,8 +15,7 @@
     },
     "autoload": {
         "psr-4": {
-            "QUI\\Auth\\LinkedIn\\": "src\/QUI\/Auth\/LinkedIn",
-            "QUI\\Registration\\LinkedIn\\": "src\/QUI\/Registration\/LinkedIn"
+            "QUI\\LinkedIn\\": "src\/QUI\/LinkedIn"
         }
     }
 }
