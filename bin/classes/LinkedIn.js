@@ -25,6 +25,7 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
             this.$code = null;
             this.$clientId = null;
             this.$accessToken = null;
+            this.$tokenExpiresAt = null;
         },
 
         getButton: function () {
@@ -33,7 +34,7 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
 
         authenticate: function () {
             return this.getClientId().then(() => {
-                if (this.$token) {
+                if (this.$token && !this.isTokenExpired()) {
                     return this.$token;
                 }
 
@@ -50,7 +51,7 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
                     const popup = window.open(
                         authUrl,
                         'linkedin_auth',
-                        'width=520,height=640,noopener,noreferrer'
+                        'width=520,height=640'
                     );
 
                     if (!popup) {
@@ -100,6 +101,7 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
                         this.exchangeCode(this.$code, redirectUri).then((tokens) => {
                             this.$token = tokens.id_token || null;
                             this.$accessToken = tokens.access_token || null;
+                            this.setTokenExpiry(tokens);
 
                             if (!this.$token) {
                                 reject('LinkedIn id_token missing');
@@ -167,11 +169,54 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
          * @return {Promise}
          */
         getToken: function () {
-            if (this.$token) {
+            if (this.$token && !this.isTokenExpired()) {
                 return Promise.resolve(this.$token);
             }
 
             return this.authenticate();
+        },
+
+        /**
+         * Check if a current token is expired
+         *
+         * @return {boolean}
+         */
+        isTokenExpired: function () {
+            if (!this.$tokenExpiresAt) {
+                return false;
+            }
+
+            return Math.floor(Date.now() / 1000) >= this.$tokenExpiresAt;
+        },
+
+        /**
+         * Derive token expiry from id_token or expires_in
+         *
+         * @param {Object} tokens
+         */
+        setTokenExpiry: function (tokens) {
+            this.$tokenExpiresAt = null;
+
+            if (tokens && tokens.id_token) {
+                try {
+                    const parts = tokens.id_token.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        if (payload && payload.exp) {
+                            this.$tokenExpiresAt = parseInt(payload.exp, 10);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                }
+            }
+
+            if (tokens && tokens.expires_in) {
+                const expiresIn = parseInt(tokens.expires_in, 10);
+                if (!Number.isNaN(expiresIn)) {
+                    this.$tokenExpiresAt = Math.floor(Date.now() / 1000) + expiresIn;
+                }
+            }
         },
 
         /**

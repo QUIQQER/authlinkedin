@@ -126,10 +126,20 @@ class LinkedIn
             ]
         );
 
-        $User->enableAuthenticator(
-            Auth::class,
-            QUI::getUsers()->getSystemUser()
-        );
+        try {
+            $User->enableAuthenticator(
+                Auth::class,
+                QUI::getUsers()->getSystemUser()
+            );
+        } catch (\Exception $e) {
+            QUI\System\Log::addError($e->getMessage(), [
+                'class' => LinkedIn::class,
+                'type' => 'enableAuthenticator',
+                'userId' => $User->getUUID(),
+                'linkedInSub' => $profileData['sub'],
+                'email' => $profileData['email']
+            ]);
+        }
     }
 
     /**
@@ -238,7 +248,10 @@ class LinkedIn
             throw new QUI\Exception('LinkedIn client id missing');
         }
 
-        if ($issuer !== 'https://www.linkedin.com') {
+        if (
+            $issuer !== 'https://www.linkedin.com'
+            && $issuer !== 'https://www.linkedin.com/oauth'
+        ) {
             throw new QUI\Exception('LinkedIn token issuer invalid');
         }
 
@@ -254,11 +267,11 @@ class LinkedIn
             throw new QUI\Exception('LinkedIn token expiry invalid');
         }
 
-        if ((int)$exp < $now - 60) {
+        if ((int)$exp < ($now - 60)) {
             throw new QUI\Exception('LinkedIn token expired');
         }
 
-        if (!is_null($nbf) && (int)$nbf > $now + 60) {
+        if (!is_null($nbf) && (int)$nbf > ($now + 60)) {
             throw new QUI\Exception('LinkedIn token not active');
         }
     }

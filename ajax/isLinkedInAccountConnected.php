@@ -10,7 +10,7 @@
 use QUI\LinkedIn\LinkedIn;
 
 QUI::$Ajax->registerFunction(
-    'package_quiqqer_authapple_ajax_isLinkedInAccountConnected',
+    'package_quiqqer_authlinkedin_ajax_isLinkedInAccountConnected',
     function ($idToken) {
         return LinkedIn::existsQuiqqerAccount($idToken);
     },
