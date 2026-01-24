@@ -10,12 +10,12 @@
         "url": "https://www.pcsg.de"
     },
     "require": {
-        "quiqqer\/core": "^2.1",
-        "quiqqer\/frontend-users": "^2.8"
+        "quiqqer/core": "^2.1",
+        "quiqqer/frontend-users": "^2.8"
     },
     "autoload": {
         "psr-4": {
-            "QUI\\LinkedIn\\": "src\/QUI\/LinkedIn"
+            "QUI\\LinkedIn\\": "src/QUI/LinkedIn"
         }
     }
 }
