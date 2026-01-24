@@ -72,9 +72,8 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
                         if (event.origin !== window.location.origin) {
                             return;
                         }
-                        const data = event.data || {};
 
-                        console.log('onMessage', data);
+                        const data = event.data || {};
 
                         if (data.provider !== 'linkedin') {
                             return;
@@ -178,7 +177,7 @@ define('package/quiqqer/authlinkedin/bin/classes/LinkedIn', [
         },
 
         /**
-         * Check if current token is expired
+         * Check if a current token is expired
          *
          * @return {boolean}
          */
