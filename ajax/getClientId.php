@@ -14,4 +14,3 @@ QUI::$Ajax->registerFunction(
         return LinkedIn::getClientId();
     }
 );
-
