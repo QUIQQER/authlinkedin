@@ -41,5 +41,21 @@
             <de><![CDATA[Client-ID]]></de>
             <en><![CDATA[Client-ID]]></en>
         </locale>
+        <locale name="settings.apiSettings.clientId.description">
+            <de><![CDATA[Die Client-ID aus deiner LinkedIn App (Developer Portal).]]></de>
+            <en><![CDATA[Client ID from your LinkedIn app (Developer Portal).]]></en>
+        </locale>
+        <locale name="settings.apiSettings.clientSecret.title">
+            <de><![CDATA[Client-Secret]]></de>
+            <en><![CDATA[Client Secret]]></en>
+        </locale>
+        <locale name="settings.apiSettings.clientSecret.description">
+            <de><![CDATA[Das Client-Secret aus deiner LinkedIn App. Wird für den Token-Tausch benötigt.]]></de>
+            <en><![CDATA[Client Secret from your LinkedIn app. Required for token exchange.]]></en>
+        </locale>
+        <locale name="button.title">
+            <de><![CDATA[Weiter mit LinkedIn]]></de>
+            <en><![CDATA[Continue with LinkedIn]]></en>
+        </locale>
     </groups>
 </locales>

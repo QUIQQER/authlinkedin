@@ -21,15 +21,19 @@ use QUI\Locale;
  */
 class Auth extends AbstractAuthenticator
 {
-    protected QUI\Interfaces\Users\User | null $User = null;
+    protected QUI\Interfaces\Users\User $User;
 
+    /**
+     * @param array<string, mixed>|int|string|User|null $user
+     */
     public function __construct(array | int | string | User | null $user = '')
     {
+        $this->User = QUI::getUsers()->getNobody();
+
         if (!empty($user) && is_string($user)) {
             try {
                 $this->User = QUI::getUsers()->getUserByName($user);
             } catch (\Exception) {
-                $this->User = QUI::getUsers()->getNobody();
             }
         }
     }
@@ -40,7 +44,9 @@ class Auth extends AbstractAuthenticator
     }
 
     /**
+     * @param array<string, mixed>|int|string $authParams
      * @throws Exception
+     * @throws QUI\Exception
      */
     public function auth(array | int | string $authParams): void
     {
@@ -68,13 +74,13 @@ class Auth extends AbstractAuthenticator
 
         $connectionProfile = LinkedIn::getConnectedAccountByToken($token);
 
+        if (empty($connectionProfile['userId'])) {
+            throw new Exception('LinkedIn user does not exist in QUIQQER', 401);
+        }
+
         try {
             $User = $Users->get($connectionProfile['userId']);
-            // Apple::connectQuiqqerAccount($User->getUUID(), $token, false);
-
-            if (is_null($this->User)) {
-                $this->User = $User;
-            }
+            $this->User = $User;
         } catch (QUI\Exception) {
             throw new Exception('LinkedIn user does not exist in QUIQQER', 401);
         }

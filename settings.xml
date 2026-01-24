@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiqqer>
+    <settings>
+        <config>
+            <section name="apiSettings">
+                <conf name="linkedInClientId">
+                    <type><![CDATA[string]]></type>
+                </conf>
+                <conf name="linkedInClientSecret">
+                    <type><![CDATA[string]]></type>
+                </conf>
+            </section>
+        </config>
+
+        <window name="frontend-users">
+            <title>
+                <locale group="quiqqer/frontend-users" var="menu.title"/>
+            </title>
+            <params>
+                <icon>fa fa-cogs</icon>
+            </params>
+
+            <categories>
+                <category name="linkedin-auth-settings" index="10">
+                    <text>
+                        <locale group="quiqqer/authlinkedin" var="settings.title"/>
+                    </text>
+                    <icon>fa fa-brands fa-linkedin</icon>
+
+                    <settings title="apiSettings" name="apiSettings">
+                        <title>
+                            <locale group="quiqqer/authlinkedin" var="settings.apiSettings.title"/>
+                        </title>
+
+                        <input conf="apiSettings.linkedInClientId" type="text">
+                            <text>
+                                <locale group="quiqqer/authlinkedin" var="settings.apiSettings.clientId.title"/>
+                            </text>
+                            <description>
+                                <locale group="quiqqer/authlinkedin" var="settings.apiSettings.clientId.description"/>
+                            </description>
+                        </input>
+
+                        <input conf="apiSettings.linkedInClientSecret" type="text">
+                            <text>
+                                <locale group="quiqqer/authlinkedin" var="settings.apiSettings.clientSecret.title"/>
+                            </text>
+                            <description>
+                                <locale group="quiqqer/authlinkedin" var="settings.apiSettings.clientSecret.description"/>
+                            </description>
+                        </input>
+
+                    </settings>
+                </category>
+            </categories>
+        </window>
+    </settings>
+</quiqqer>
