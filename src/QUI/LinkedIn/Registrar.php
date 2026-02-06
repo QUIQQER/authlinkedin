@@ -26,13 +26,13 @@ class Registrar extends FrontendUsers\AbstractRegistrar
     public function createUser(): QUI\Interfaces\Users\User
     {
         $token = $this->getAttribute('token');
+        $profileData = LinkedIn::validateAccessToken($token);
 
-        if (LinkedIn::existsQuiqqerAccount($token)) {
-            return LinkedIn::getUserByToken($token);
+        if (LinkedIn::existsQuiqqerAccount($token, $profileData)) {
+            return LinkedIn::getUserByToken($token, $profileData);
         }
 
         $User =  parent::createUser();
-        $profileData = LinkedIn::getProfileData($token);
         $SystemUser = QUI::getUsers()->getSystemUser();
 
         $User->setAttributes([
@@ -67,7 +67,7 @@ class Registrar extends FrontendUsers\AbstractRegistrar
     public function getUsername(): string
     {
         $token = $this->getAttribute('token');
-        $profileData = LinkedIn::getProfileData($token);
+        $profileData = LinkedIn::validateAccessToken($token);
 
         return $profileData['email'];
     }
