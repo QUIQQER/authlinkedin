@@ -2,12 +2,21 @@
 
 namespace QUI\LinkedIn;
 
+use Firebase\JWT\JWK;
+use Firebase\JWT\JWT;
 use QUI;
 use QUI\ExceptionStack;
+use QUI\Interfaces\Users\User;
 use QUI\Permissions\Exception;
 
 class LinkedIn
 {
+    /**
+     * @var array<string, mixed>|null
+     */
+    private static ?array $jwksCache = null;
+    private static int $jwksCacheExpiresAt = 0;
+
     public static function table(): string
     {
         return QUI::getDBTableName('quiqqer_auth_linkedin');
@@ -104,17 +113,15 @@ class LinkedIn
         }
 
         $User = QUI::getUsers()->get($uid);
-        $profileData = self::getProfileData($accessToken);
+        $profileData = self::validateAccessToken($accessToken);
 
-        if (self::existsQuiqqerAccount($accessToken)) {
+        if (self::existsQuiqqerAccount($accessToken, $profileData)) {
             throw new QUI\Exception([
                 'quiqqer/authlinkedin',
                 'exception.linkedin.account_already_connected',
                 ['email' => $profileData['email']]
             ]);
         }
-
-        self::validateAccessToken($accessToken);
 
         QUI::getDataBase()->insert(
             self::table(),
@@ -143,20 +150,26 @@ class LinkedIn
     }
 
     /**
+     * @param string $idToken
+     * @param array<string, mixed>|null $payload
      * @return bool|array<string, mixed>
      * @throws Exception
      * @throws QUI\Database\Exception
      * @throws QUI\Exception
      */
-    public static function getConnectedAccountByToken(string $idToken): bool | array
+    public static function getConnectedAccountByToken(string $idToken, ?array $payload = null): bool | array
     {
-        self::validateAccessToken($idToken);
-        $profile = self::getProfileData($idToken);
+        $profile = $payload ?? self::validateAccessToken($idToken);
+        $linkedInSub = $profile['sub'] ?? null;
+
+        if (empty($linkedInSub)) {
+            return false;
+        }
 
         $result = QUI::getDataBase()->fetch([
             'from' => self::table(),
             'where' => [
-                'linkedInSub' => $profile['sub']
+                'linkedInSub' => $linkedInSub
             ]
         ]);
 
@@ -217,21 +230,33 @@ class LinkedIn
      * the necessary information (email)
      *
      * @param string $idToken
-     * @return void
+     * @return array<string, mixed>
      * @throws Exception
      * @throws QUI\Exception
      */
-    public static function validateAccessToken(string $idToken): void
+    public static function validateAccessToken(string $idToken): array
     {
-        $parts = explode('.', $idToken);
-        if (count($parts) !== 3) {
-            throw new QUI\Exception('LinkedIn token invalid');
+        $header = self::getJwtHeader($idToken);
+        $alg = $header['alg'] ?? null;
+
+        if ($alg !== 'RS256') {
+            throw new QUI\Exception('LinkedIn token algorithm invalid');
         }
 
-        $payload = json_decode(
-            base64_decode(strtr($parts[1], '-_', '+/')),
-            true
-        );
+        $jwks = self::getJwks();
+        $keys = JWK::parseKeySet($jwks);
+
+        if (empty($header['kid']) && count($keys) === 1) {
+            $keys = current($keys);
+        }
+
+        try {
+            $decoded = JWT::decode($idToken, $keys);
+        } catch (\Exception) {
+            throw new QUI\Exception('LinkedIn token signature invalid');
+        }
+
+        $payload = json_decode((string)json_encode($decoded), true);
 
         if (!is_array($payload)) {
             throw new QUI\Exception('LinkedIn token payload invalid');
@@ -274,11 +299,21 @@ class LinkedIn
         if (!is_null($nbf) && (int)$nbf > ($now + 60)) {
             throw new QUI\Exception('LinkedIn token not active');
         }
+
+        return $payload;
     }
 
-    public static function existsQuiqqerAccount(string $idToken): bool
+    /**
+     * @param string $idToken
+     * @param array<string, mixed>|null $payload
+     * @return bool
+     * @throws Exception
+     * @throws QUI\Exception
+     * @throws QUI\Database\Exception
+     */
+    public static function existsQuiqqerAccount(string $idToken, ?array $payload = null): bool
     {
-        $data = self::getProfileData($idToken);
+        $data = $payload ?? self::validateAccessToken($idToken);
         $linkedInSub = $data['sub'] ?? null;
 
         if (empty($linkedInSub)) {
@@ -326,11 +361,16 @@ class LinkedIn
     }
 
     /**
+     * @param string $idToken
+     * @param array<string, mixed>|null $payload
+     * @return User
+     * @throws Exception
+     * @throws QUI\Exception
      * @throws QUI\Users\Exception
      */
-    public static function getUserByToken(string $idToken): QUI\Interfaces\Users\User
+    public static function getUserByToken(string $idToken, ?array $payload = null): QUI\Interfaces\Users\User
     {
-        $data = self::getProfileData($idToken);
+        $data = $payload ?? self::validateAccessToken($idToken);
         $linkedInSub = $data['sub'] ?? null;
 
         if (empty($linkedInSub)) {
@@ -371,19 +411,85 @@ class LinkedIn
     /**
      * @param string $idToken
      * @return array<string, mixed>
+     * @throws Exception|QUI\Exception
      */
     public static function getProfileData(string $idToken): array
     {
+        return self::validateAccessToken($idToken);
+    }
+
+    /**
+     * @return array<string, mixed>
+     * @throws QUI\Exception
+     */
+    private static function getJwtHeader(string $idToken): array
+    {
         $parts = explode('.', $idToken);
         if (count($parts) !== 3) {
-            return [];
+            throw new QUI\Exception('LinkedIn token invalid');
         }
 
-        $payload = json_decode(
-            base64_decode(strtr($parts[1], '-_', '+/')),
-            true
-        );
+        $header = json_decode(self::base64UrlDecode($parts[0]), true);
 
-        return is_array($payload) ? $payload : [];
+        if (!is_array($header)) {
+            throw new QUI\Exception('LinkedIn token header invalid');
+        }
+
+        return $header;
+    }
+
+    /**
+     * @return array<string, mixed>
+     * @throws QUI\Exception
+     */
+    private static function getJwks(): array
+    {
+        $now = time();
+
+        if (self::$jwksCache !== null && self::$jwksCacheExpiresAt > $now) {
+            return self::$jwksCache;
+        }
+
+        $ch = curl_init('https://www.linkedin.com/oauth/openid/jwks');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10
+        ]);
+
+        $raw = curl_exec($ch);
+        $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+
+        if ($raw === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new QUI\Exception('LinkedIn JWKS request failed: ' . $error);
+        }
+
+        curl_close($ch);
+
+        if ($status >= 400) {
+            throw new QUI\Exception('LinkedIn JWKS request failed with status ' . $status);
+        }
+
+        $jwks = json_decode((string)$raw, true);
+
+        if (!is_array($jwks) || empty($jwks['keys']) || !is_array($jwks['keys'])) {
+            throw new QUI\Exception('LinkedIn JWKS response invalid');
+        }
+
+        self::$jwksCache = $jwks;
+        self::$jwksCacheExpiresAt = $now + 3600;
+
+        return $jwks;
+    }
+
+    private static function base64UrlDecode(string $data): string
+    {
+        $remainder = strlen($data) % 4;
+        if ($remainder !== 0) {
+            $data .= str_repeat('=', 4 - $remainder);
+        }
+
+        return base64_decode(strtr($data, '-_', '+/'));
     }
 }

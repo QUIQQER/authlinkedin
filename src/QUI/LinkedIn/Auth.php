@@ -58,21 +58,20 @@ class Auth extends AbstractAuthenticator
         }
 
         $token = $authParams['token'];
-        LinkedIn::validateAccessToken($token);
+        $payload = LinkedIn::validateAccessToken($token);
 
-        if (!LinkedIn::existsQuiqqerAccount($token)) {
+        if (!LinkedIn::existsQuiqqerAccount($token, $payload)) {
             throw new Exception('LinkedIn user does not exist in QUIQQER', 401);
         }
 
-        $userData = LinkedIn::getProfileData($token);
-        $linkedInSub = $userData['sub'] ?? null;
+        $linkedInSub = $payload['sub'] ?? null;
         $Users = QUI::getUsers();
 
         if (empty($linkedInSub)) {
             throw new Exception('LinkedIn user does not exist in QUIQQER', 401);
         }
 
-        $connectionProfile = LinkedIn::getConnectedAccountByToken($token);
+        $connectionProfile = LinkedIn::getConnectedAccountByToken($token, $payload);
 
         if (empty($connectionProfile['userId'])) {
             throw new Exception('LinkedIn user does not exist in QUIQQER', 401);
