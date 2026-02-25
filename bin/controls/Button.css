@@ -1,9 +1,17 @@
 .quiqqer-auth-linkedin-registration {
-    background: #0A66C2 !important;
-    color: #fff !important;
-    border-color: #0A66C2 !important;
+    background: #0A66C2;
+    color: #fff;
+    border-color: #0A66C2;
+
+    --qui-btn-color: #fff;
+    --qui-btn-bgColor: #0A66C2;
+    --qui-btn-borderColor: #0A66C2;
+
+    --qui-btn-color--hover: #fff;
+    --qui-btn-bgColor--hover: #004182;
+    --qui-btn-borderColor--hover: #004182;
 }
 
 .quiqqer-auth-linkedin-registration:hover {
-    background: #004182 !important;
+    background: #004182;
 }
