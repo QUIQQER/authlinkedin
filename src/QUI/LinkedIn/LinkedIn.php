@@ -217,7 +217,7 @@ class LinkedIn
         if (QUI::getSession()?->get('uid') !== $userId || !$userId) {
             throw new QUI\Permissions\Exception(
                 QUI::getLocale()->get(
-                    'quiqqer/authgoogle',
+                    'quiqqer/authlinkedin',
                     'exception.operation.only.allowed.by.own.user'
                 ),
                 401
