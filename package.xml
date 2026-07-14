@@ -8,7 +8,7 @@
             <locale group="quiqqer/authlinkedin" var="package.description"/>
         </description>
 
-        <image src="URL_OPT_DIR/quiqqer/authlinkedin/bin/images/Logo.jpg"/>
+        <image src="URL_OPT_DIR/quiqqer/authlinkedin/bin/images/Logo.png"/>
 
         <support>
             <email><![CDATA[support@pcsg.de]]></email>
@@ -20,7 +20,7 @@
 
         <copyright>
             <name><![CDATA[PCSG - Computer & Internet Service OHG]]></name>
-            <license><![CDATA[GPL-3.0+]]></license>
+            <license><![CDATA[GPL-3.0-or-later]]></license>
         </copyright>
 
         <provider>
