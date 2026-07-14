@@ -123,13 +123,13 @@ class LinkedIn
             ]);
         }
 
-        QUI::getDataBase()->insert(
-            self::table(),
+        QUI::getDataBaseConnection()->insert(
+            QUI\Utils\Doctrine::quoteIdentifier(self::table()),
             [
-                'userId' => $User->getUUID(),
-                'linkedInSub' => $profileData['sub'],
-                'email' => $profileData['email'],
-                'name' => $profileData['email']
+                QUI\Utils\Doctrine::quoteIdentifier('userId') => $User->getUUID(),
+                QUI\Utils\Doctrine::quoteIdentifier('linkedInSub') => $profileData['sub'],
+                QUI\Utils\Doctrine::quoteIdentifier('email') => $profileData['email'],
+                QUI\Utils\Doctrine::quoteIdentifier('name') => $profileData['email']
             ]
         );
 
@@ -166,18 +166,7 @@ class LinkedIn
             return false;
         }
 
-        $result = QUI::getDataBase()->fetch([
-            'from' => self::table(),
-            'where' => [
-                'linkedInSub' => $linkedInSub
-            ]
-        ]);
-
-        if (empty($result)) {
-            return false;
-        }
-
-        return current($result);
+        return self::getAccountByLinkedInSub((string)$linkedInSub);
     }
 
     /**
@@ -199,9 +188,9 @@ class LinkedIn
             return;
         }
 
-        QUI::getDataBase()->delete(
-            self::table(),
-            ['userId' => $userUuid]
+        QUI::getDataBaseConnection()->delete(
+            QUI\Utils\Doctrine::quoteIdentifier(self::table()),
+            [QUI\Utils\Doctrine::quoteIdentifier('userId') => $userUuid]
         );
     }
 
@@ -217,7 +206,7 @@ class LinkedIn
         if (QUI::getSession()?->get('uid') !== $userId || !$userId) {
             throw new QUI\Permissions\Exception(
                 QUI::getLocale()->get(
-                    'quiqqer/authgoogle',
+                    'quiqqer/authlinkedin',
                     'exception.operation.only.allowed.by.own.user'
                 ),
                 401
@@ -320,19 +309,13 @@ class LinkedIn
             return false;
         }
 
-        $result = QUI::getDataBase()->fetch([
-            'from' => self::table(),
-            'where' => [
-                'linkedInSub' => $linkedInSub
-            ],
-            'limit' => 1
-        ]);
+        $account = self::getAccountByLinkedInSub((string)$linkedInSub);
 
-        if (empty($result)) {
+        if ($account === false) {
             return false;
         }
 
-        $userId = $result[0]['userId'];
+        $userId = $account['userId'] ?? null;
 
         if (empty($userId)) {
             return false;
@@ -384,16 +367,10 @@ class LinkedIn
         }
 
         try {
-            $result = QUI::getDataBase()->fetch([
-                'from' => self::table(),
-                'where' => [
-                    'linkedInSub' => $linkedInSub
-                ],
-                'limit' => 1
-            ]);
+            $account = self::getAccountByLinkedInSub((string)$linkedInSub);
 
-            if (isset($result[0]['userId'])) {
-                return QUI::getUsers()->get($result[0]['userId']);
+            if ($account !== false && isset($account['userId'])) {
+                return QUI::getUsers()->get($account['userId']);
             }
         } catch (\Exception $e) {
             QUI\System\Log::addError($e->getMessage());
@@ -416,6 +393,24 @@ class LinkedIn
     public static function getProfileData(string $idToken): array
     {
         return self::validateAccessToken($idToken);
+    }
+
+    /**
+     * @return array<string, mixed>|false
+     * @throws \Doctrine\DBAL\Exception
+     */
+    private static function getAccountByLinkedInSub(string $linkedInSub): array | false
+    {
+        $QueryBuilder = QUI::getQueryBuilder();
+
+        return $QueryBuilder
+            ->select('*')
+            ->from(QUI\Utils\Doctrine::quoteIdentifier(self::table()))
+            ->where($QueryBuilder->expr()->eq('linkedInSub', ':linkedInSub'))
+            ->setParameter('linkedInSub', $linkedInSub)
+            ->setMaxResults(1)
+            ->executeQuery()
+            ->fetchAssociative();
     }
 
     /**

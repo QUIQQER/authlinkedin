@@ -57,5 +57,29 @@
             <de><![CDATA[Weiter mit LinkedIn]]></de>
             <en><![CDATA[Continue with LinkedIn]]></en>
         </locale>
+
+        <!-- Registrar -->
+        <locale name="registrar.title">
+            <de><![CDATA[Registrierung via LinkedIn]]></de>
+            <en><![CDATA[Registration via LinkedIn]]></en>
+        </locale>
+        <locale name="registrar.description">
+            <de><![CDATA[QUIQQER Registrierung und Authentifikation mittels LinkedIn-Konto]]></de>
+            <en><![CDATA[QUIQQER registration and authentication via LinkedIn account]]></en>
+        </locale>
+
+        <!-- Exceptions -->
+        <locale name="exception.auth.wrong.data">
+            <de><![CDATA[Die zur Authentifizierung übermittelten Daten sind nicht korrekt.]]></de>
+            <en><![CDATA[The data sent for authentication is not correct.]]></en>
+        </locale>
+        <locale name="exception.linkedin.account_already_connected">
+            <de><![CDATA[Dieses LinkedIn-Konto ist bereits mit einem QUIQQER-Benutzerkonto verknüpft.]]></de>
+            <en><![CDATA[This LinkedIn account is already connected to a QUIQQER user account.]]></en>
+        </locale>
+        <locale name="exception.operation.only.allowed.by.own.user">
+            <de><![CDATA[Diese Abfrage darf nur vom übergebenen Benutzer selbst durchgeführt werden.]]></de>
+            <en><![CDATA[This request can only be executed by the given user.]]></en>
+        </locale>
     </groups>
 </locales>

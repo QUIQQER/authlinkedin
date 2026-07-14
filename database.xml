@@ -2,12 +2,12 @@
 <database>
     <global>
         <table name="quiqqer_auth_linkedin">
-            <field type="VARCHAR(50) NOT NULL PRIMARY KEY">userId</field>
-            <field type="MEDIUMTEXT NOT NULL">email</field>
-            <field type="VARCHAR(255) NOT NULL">name</field>
-            <field type="VARCHAR(255) NOT NULL">linkedInSub</field>
+            <field type="string" length="50" primary="true">userId</field>
+            <field type="text">email</field>
+            <field type="string" length="255">name</field>
+            <field type="string" length="255">linkedInSub</field>
 
-            <index>userId</index>
+            <index>linkedInSub</index>
         </table>
     </global>
 </database>
