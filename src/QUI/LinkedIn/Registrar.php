@@ -16,6 +16,23 @@ use QUI\FrontendUsers;
  */
 class Registrar extends FrontendUsers\AbstractRegistrar
 {
+    public function getDefaultActivationMode(): string
+    {
+        return FrontendUsers\Handler::ACTIVATION_MODE_AUTO;
+    }
+
+    public function supportsActivationMode(string $activationMode): bool
+    {
+        return in_array(
+            $activationMode,
+            [
+                FrontendUsers\Handler::ACTIVATION_MODE_AUTO,
+                FrontendUsers\Handler::ACTIVATION_MODE_MANUAL
+            ],
+            true
+        );
+    }
+
     // region auth stuff
     public function validate(): array
     {
